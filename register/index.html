@@ -1,0 +1,64 @@
+<html>
+  <head>
+      <title>GitHelper - authCode</title>
+      <style>
+h1{
+  font-family: ‘Arial Black’, Gadget, sans-serif;
+  color: #333333;
+  display: block;
+  text-align: center;
+  position: relative;
+  padding-top: 5%;
+}
+.msg{
+  display: block;
+  text-align: center;
+  color: #333333;
+  font-family: Verdana, Geneva, sans-serif;
+}
+.code{
+  background: #EFF0F1;
+  font-family: ‘Lucida Console’, Monaco, monospace;
+  color:black;
+}
+.wrapper {
+    text-align: center;
+}
+      </style>
+      <script>
+function getCode() {
+  var url = window.location.href;
+  var cp = url.search("code=");
+  var outputTag = document.getElementById("code");
+  if(cp > -1){
+    var code = url.substring(cp,url.length);
+    code = code.replace(/code=/,"");
+    if(code.search("=") > -1){
+      outputTag.textContent = "Error while retrieving code from url!";
+    }
+    else{
+      outputTag.textContent = "Your code is:";
+      codeSpan = document.createElement("span");
+      codeSpan.textContent = code;
+      codeSpan.className = "code";
+      codeSpan.id = "myCode";
+      outputTag.appendChild(codeSpan);
+    }
+  }
+}
+function init(){
+  new Clipboard('.cpbtn');
+}
+      </script>
+      <script src="module/clipboard/dist/clipboard.min.js"></script>
+  </head>
+  <body onload="getCode();init()">
+    <h1 id="code">No code found!</h1>
+    <div class="wrapper">
+      <button class="cpbtn" data-clipboard-target="#myCode">
+        <img src="images/clippy.svg" alt="Copy to clipboard" width="15px">
+      </button>
+    </div>
+    <p class="msg">Please enter this code into the application terminal.</p>
+  </body>
+</html>
