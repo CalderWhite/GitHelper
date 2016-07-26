@@ -57,13 +57,14 @@ def phrase_percent(text,desired_text):
         return avg
 
 class ArtificialIntelligence(object):
-        def __init__(self,mic,name,user_name):
+        def __init__(self,mic,name,user_name,assistance_package):
                 self.mic_index = mic
                 self.recognizer = speech_recognition.Recognizer()
                 self.user_name = user_name
                 self.name = name
                 self.speech_engine = pyttsx.init('sapi5') # see http://pyttsx.readthedocs.org/en/latest/engine.html#pyttsx.init
                 self.speech_engine.setProperty('rate', 150)
+                self.assistance_package = __import__("assistant_drivers." + assistant_package)
         def say(self,text):
                 """play audio for whatever text is given; say it."""
                 self.speech_engine.say(text)
@@ -108,7 +109,7 @@ class ArtificialIntelligence(object):
                 if message != None:
                         self.say(message)
                 response = self.listen(command="Yes Sir?")
-                print(response)
+                self.assistance_package.run(response)
         def assistance_loop(self):
                 """run a loop, and when the bot name is said, it will ask if anything is needed and listen"""
                 looping = True
@@ -125,6 +126,7 @@ class ArtificialIntelligence(object):
                 pass
         def run(self):
                 self.choose_mic()
+                self.say("I'm llistening whenever you need me Sir!")
                 self.assistance_loop()
                 pass
 def main():
