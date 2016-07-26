@@ -1,9 +1,39 @@
+print("Importing modules...")
 from github import Github
 from github import GithubException
+import ghAuth
 import sys, json, getpass, base64, requests, random
 import urllib.request
 import urllib.error
 
+def check_oauth_token():
+    global r
+    global noFile
+    global oauth_token
+    noFile = False
+    try:
+        r = open("userData.json",'r')
+    except:
+        noFile = True
+    if noFile:
+        oauth_token = ghAuth.getAuth(useBrowser=True)
+        w = open("userData.json",'w')
+        w.write('"oauth_token" : "%s"}' % oauth_token)
+        w.close()
+    else:
+        rf = r.read()
+        j = json.loads(rf)
+        r.close()
+        try:
+            oauth_token = j["oauth_token"]
+        except KeyError:
+            oauth_token = ghAuth.getAuth(useBrowser=True)
+            w = open("userData.json",'w')
+            w.write('{"oauth_token" : "%s"}' % oauth_token)
+            w.close()
+    #print(oauth_token)
+    return oauth_token
+        
 class GitHubUser(object):
     def __init__(self,oauth_token):
         self.oauth_token = oauth_token
@@ -72,8 +102,10 @@ class GitHubUser(object):
             }
         new_url = "https://api.github.com/repos/"+ self.user_json["login"] + "/" + name + "/contents/" + path
         res = requests.put(new_url,data=data,headers=headers)
-        print(res.text)
+        return res.status_code
         pass
 if __name__ == '__main__':
-    user = GitHubUser(getpass.getpass("Gimme dat hash:"))
-    user.commit_file("Testey.txt","commit from module",str(random.random()),"master","Github_Api_Test",print_status=True)
+    oauth_token = check_oauth_token()
+    user = GitHubUser(oauth_token)
+    res = user.commit_file("Testey.txt","commit from module",str(random.random()),"master","Github_Api_Test",print_status=True)
+    print("Got response " + str(res))
