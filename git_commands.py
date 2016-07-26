@@ -40,35 +40,6 @@ class GitHubUser(object):
         res = urllib.request.urlopen("http://api.github.com/user?oauth_token=" + oauth_token).read()
         j = json.loads(res.decode('utf-8'))
         self.user_json = j
-    """
-    the PyGithun library was terrible, so I decided to just use the github v3 REST api
-    def try_write_auth(self,userr,pswrd):
-        global wrong_pass
-        wrong_pass = False
-        try:
-            global g
-            g = Github(userr,pswrd)
-            user = g.get_user()
-            user.total_private_repos
-        except GithubException:
-            msg = sys.exc_info()
-            if msg[1]._GithubException__data["message"] == "Bad credentials":
-                wrong_pass = True
-        if wrong_pass:
-            raise Exception("Wrong password.")
-        ###################################################
-        #               save info now                     #
-        ###################################################
-        w = open("userData.json",'w')
-        jsonObj = {
-            "user" : userr,
-            "pswrd" : pswrd
-            }
-        jstr = json.dumps(jsonObj, indent=4)
-        w.write(jstr)
-        w.close()
-        pass
-    """
     def commit_file(self,path,msg,file,branch,name,print_status=False):
         if print_status:
             print("retriving file sha...")
