@@ -35,9 +35,11 @@ words = {
 ###############################
 #         if callbacks        #
 ###############################
-def back_up_prev_cb(text):
+def back_up_prev_cb(text,bot):
+        bot.say("Right away " + bot.pronoun)
         pass
-def back_up_curr_cb(text):
+def back_up_curr_cb(text,bot):
+        bot.say("Right away " + bot.pronoun)
         pass
 ###############################
 #           if list           #
@@ -58,6 +60,20 @@ if_lists = [
                         github_pronouns["current_repo"]
                         ],
                 "callback" : back_up_curr_cb
+        },
+        {
+                "list" : [
+                        github_words["upload"],
+                        github_pronouns["current_repo"]
+                        ],
+                "callback" : back_up_curr_cb
+        },
+        {
+                "list" : [
+                        github_words["upload"],
+                        github_pronouns["previous_repo"]
+                        ],
+                "callback" : back_up_prev_cb
         }
         ]
 ###############################
@@ -117,14 +133,20 @@ def phrase_percent(text,desired_text):
         avg = ( (wrdp / 1.5) + (pwp * 1.5) ) / 2
         return avg
 
-def for_if(string,pantheon):
+def for_if(string,pantheon,find=False):
         equals = False
         if type(pantheon) == type({}):
                 for i in pantheon:
+                        if find:
+                                if string.find(i) > -1:
+                                        equals = True
                         if string == pantheon[i]:
                                 equals = True
         else:
                 for i in pantheon:
+                        if find:
+                                if string.find(i) > -1:
+                                        equals = True
                         if string == i:
                                 equals = True
         return equals
@@ -137,7 +159,7 @@ def fuzzy_logic_v2(text,bot):
         for i in if_lists:
                 for j in i["list"]:
                         if type(j) == type([]):
-                                if for_if(text,j):
+                                if for_if(text,j,find=True):
                                         word_count[if_lists.index(i)] += 1
                         else:
                                 if text.find(j) > -1:
@@ -146,7 +168,7 @@ def fuzzy_logic_v2(text,bot):
         run = False
         for i in word_count:
                 if i == len(if_lists[word_count.index(i)]):
-                        if_lists[word_count.index(i)]["callback"](text)
+                        if_lists[word_count.index(i)]["callback"](text,bot)
                         run = True
                         break
         if run == False:
@@ -193,6 +215,4 @@ def run(text,bot):
         else:
                 res = fuzzy_logic_v2(text,bot)
         return res
-                
-                
 
