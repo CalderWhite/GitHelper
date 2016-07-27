@@ -1,6 +1,6 @@
 from gitpanion import github_api
 from random import randrange
-
+import os, ctypes
 ###############################
 #        swap words           #
 ###############################
@@ -33,6 +33,88 @@ words = {
         ]
     }
 ###############################
+#            data             #
+###############################
+windows_folder_libraries = [
+        "Desktop",
+        "Documents",
+        "Downloads",
+        "Music",
+        "Pictures",
+        "Videos"
+        ]
+###############################
+#      command functions      #
+###############################
+def get_all_windows_open():
+        """returns all windows currently open on computer using PyWin32"""
+        EnumWindows = ctypes.windll.user32.EnumWindows
+        EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int))
+        GetWindowText = ctypes.windll.user32.GetWindowTextW
+        GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
+        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+        
+        titles = []
+        def foreach_window(hwnd, lParam):
+        	if IsWindowVisible(hwnd):
+        		length = GetWindowTextLength(hwnd)
+        		buff = ctypes.create_unicode_buffer(length + 1)
+        		GetWindowText(hwnd, buff, length + 1)
+        		titles.append(buff.value)
+        	return True
+        EnumWindows(EnumWindowsProc(foreach_window), 0)
+        return titles
+def get_current_project():
+        """attempt to find what project the user is currently working on"""
+        user_path = os.path.expanduser("~")
+        # get all windows open
+        windows = get_all_windows_open()
+        # see which window title has the user's path in it
+        good_windows = []
+        for i in windows:
+                if i.find(user_path) > -1:
+                        good_windows.append(i)
+        if len(good_windows) < 1:
+                # no open projects!
+                return None
+        path_names = []
+        for base_title in good_windows:
+                place = base_title.find(user_path)
+                # this should work, since we already refined those that didn't have user_path earlier
+                base_path = base_title[place:len(base_title)]
+                base_path = base_path.split(" ")[0]
+                init_path = base_path
+                init_path = init_path.replace("\\","/")
+                base_path = base_path.replace(user_path,"")
+                base_path = base_path.replace("\\","/")
+                # I could use os.listdir(user_path), but I don't want to risk
+                # it if the user is working out of their user directiory.
+                # (then it wouldn't work)
+                for i in windows_folder_libraries:
+                        base_path = base_path.replace("/" + i + "/","")
+                paths = base_path.split("/")
+                path_names.append({"name" : paths[0],"path" : init_path,"count" : 0})
+        joined_paths = ""
+        for i in path_names:
+                joined_paths = joined_paths + i["name"]
+        if joined_paths == path_names[0]["name"] * len(path_names):
+                me_path = path_names[0]["path"].split("/")
+                me_path.pop(-1)
+                me_path = "/".join(me_path)
+                return me_path
+        else:
+                for i in path_names:
+                        for j in path_names:
+                                if i["name"] == j["name"]:
+                                        i["count"] += 1
+                #for i in path_names:
+                #        print(i["name"],i["count"])
+                path_names.sort(key=lambda r: r["count"],reverse=True)
+                return path_names[0]
+                                        
+        # ---------
+        return None
+###############################
 #         if callbacks        #
 ###############################
 def back_up_prev_cb(text,bot):
@@ -40,6 +122,11 @@ def back_up_prev_cb(text,bot):
         pass
 def back_up_curr_cb(text,bot):
         bot.say("Right away " + bot.pronoun)
+        project = get_current_project()
+        if project == None:
+                bot.say("Sir, I'm not quite sure what project you're talking about.")
+        else:
+                bot.say("Are you talking about " + project["name"] + "?")
         pass
 ###############################
 #           if list           #
@@ -168,7 +255,7 @@ def fuzzy_logic_v2(text,bot):
         run = False
         for i in word_count:
                 if i == len(if_lists[word_count.index(i)]):
-                        if_lists[word_count.index(i)]["callback"](text,bot)
+                        if_lists[word_count.index(i)]["callback"].__call__(text,bot)
                         run = True
                         break
         if run == False:
