@@ -1,6 +1,6 @@
 from gitpanion import github_api
 from random import randrange
-import os, ctypes
+import os, ctypes, json
 ###############################
 #        swap words           #
 ###############################
@@ -110,10 +110,40 @@ def get_current_project():
                 #for i in path_names:
                 #        print(i["name"],i["count"])
                 path_names.sort(key=lambda r: r["count"],reverse=True)
-                return path_names[0]
+                pkg = path_names[0]
+                repath = pkg["path"].split("/")
+                repath.pop(-1)
+                repath = "/".join(repath)
+                pkg["path"] = repath
+                return pkg
                                         
         # ---------
         return None
+def remember_current_project(pkg):
+        pkg = {
+                "name" : pkg["name"],
+                "path" : pkg["path"]
+                }
+        #pkg_str = json.dumps(pkg,indent=4)
+        r = open('memory/memories.json','r')
+        # no ../ since this code will be run from py3Speech
+        mem = json.loads(r.read())
+        r.close()
+        if mem.__contains__("this"):
+                # if the names are the same don't push one back to the "that" position
+                if mem["this"]["name"] != pkg["name"]:
+                        mem["that"] = mem["this"]
+                        mem["this"] = pkg
+                else:
+                        mem["this"] = pkg
+        else:
+                # this is really just for the first time you use the script
+                mem["this"] = pkg
+        wstr = json.dumps(mem,indent=4)
+        w = open('memory/memories.json','w')
+        w.write(wstr)
+        w.close()
+        print(wstr)
 ###############################
 #         if callbacks        #
 ###############################
@@ -126,7 +156,9 @@ def back_up_curr_cb(text,bot):
         if project == None:
                 bot.say("Sir, I'm not quite sure what project you're talking about.")
         else:
-                bot.say("Are you talking about " + project["name"] + "?")
+                #bot.say("Are you talking about " + project["name"] + "?")
+                bot.say("I'll remember that.")
+                remember_current_project(project)
         pass
 ###############################
 #           if list           #
