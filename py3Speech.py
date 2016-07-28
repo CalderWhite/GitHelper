@@ -78,6 +78,7 @@ class ArtificialIntelligence(object):
         def assistance_loop(self):
                 """run a loop, and when the bot name is said, it will ask if anything is needed and listen"""
                 looping = True
+                driver = self.assistance_package.init(self)
                 while looping:
                         raw_audio = self.listen()
                         audio = raw_audio.lower()
@@ -86,6 +87,7 @@ class ArtificialIntelligence(object):
                         if audio.find(self.name.lower()) > -1:
                                 self.fast_assist(raw_audio)
                         elif audio.find("shut down") > -1 or audio.find("shutdown") > -1:
+                                self.say("shutting down...")
                                 looping = False
                                 sys.exit()
                         elif audio != "" and audio != None:
@@ -100,6 +102,8 @@ class ArtificialIntelligence(object):
                 pass
 def main():
         jarvis = ArtificialIntelligence(1,"Jarvis","Calder","gitpanion_api","Sir")
+        #jarvis.assistance_package.init(jarvis)
+        #jarvis.fast_assist("save this")
         jarvis.run()
 
 if __name__ == '__main__':
