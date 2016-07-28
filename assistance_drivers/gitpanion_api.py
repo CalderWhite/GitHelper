@@ -94,6 +94,7 @@ def get_current_project():
                         base_path = base_path.replace("/" + i + "/","")
                 paths = base_path.split("/")
                 path_names.append({"name" : paths[0],"path" : init_path,"count" : 0})
+        """
         joined_paths = ""
         for i in path_names:
                 joined_paths = joined_paths + i["name"]
@@ -101,8 +102,14 @@ def get_current_project():
                 me_path = path_names[0]["path"].split("/")
                 me_path.pop(-1)
                 me_path = "/".join(me_path)
-                return me_path
+                pkg = {
+                        "name" : path_names[0]["name"],
+                        "path" : me_path
+                        }
+                return pkg
         else:
+        """
+        if True:
                 for i in path_names:
                         for j in path_names:
                                 if i["name"] == j["name"]:
@@ -143,22 +150,91 @@ def remember_current_project(pkg):
         w = open('memory/memories.json','w')
         w.write(wstr)
         w.close()
-        print(wstr)
+        #print(wstr)
+def get_prev_project():
+        r = open("memory/memories.json")
+        j = json.loads(r.read())
+        if j.__contains__("that"):
+                return j["that"]
+        else:
+                # default to the current project
+                return None
+def local_to_github_upload(pkg,bot):
+        """the package (the only required positional argument) must have the name of the repo, and the path to the file in a dictionary such as this:\n{\n      "name" : <repo name>,\n         "path" : <local file path>\n}"""
+        github_path = pkg["path"][pkg["path"].find(pkg["name"]) + len(pkg["name"]) + 1 : ]
+        # add 1 to the first argument of the substring so we get rid of the / character.
+        cmsg = "commit from " + bot.name + " AI"
+        print("reading...   | " + pkg["path"])
+        global r
+        global rr
+        try:
+                r = open(pkg["path"],'r')
+                rr = r.read()
+        except UnicodeDecodeError:
+                r = open(pkg["path"],'rb')
+                rr = r.read()
+        # I do this now, so that if there's an error, it will occur after the print: "reading..."
+        # not the print : "uploading..."
+        # this way the user has a bit more knowledge on when and why and error occured
+        print("uploading... | " + github_path)
+        github_user.commit_file(github_path,cmsg,rr,pkg["branch"],pkg["name"])
+def start_dir_upload(project,bot):
+        path = project["path"]
+        folders = next(os.walk(path))[1]
+        files = next(os.walk(path))[2]
+        #print(folders)
+        #print("------------")
+        for folder in folders:
+                current_pkg = {
+                        "name" : project["name"],
+                        "path" : path + "/" + folder,
+                        "branch" : project["branch"]
+                        }
+                start_dir_upload(current_pkg,bot)
+        for file in files:
+                file_package = {
+                        "name" : project["name"],
+                        "path" : path + "/" + file,
+                        "branch" : project["branch"]
+                        }
+                local_to_github_upload(file_package,bot)
+###############################
+#       github functions      #
+###############################
+def upload_folder(pkg,bot):
+        start_dir_upload(pkg,bot)
+        pass
 ###############################
 #         if callbacks        #
 ###############################
 def back_up_prev_cb(text,bot):
         bot.say("Right away " + bot.pronoun)
+        project = get_prev_project()
+        if project == None:
+                project = get_current_project()
+                if project == None:
+                        bot.say("Sir, I'm not quite sure what project you're talking about.")
+                else:
+                        # now user the current project
+                        bot.say("I'll remember that.")
+                        remember_current_project(project)
+        else:
+                bot.say("I know what you're talking about, but the feature isn't implimented at this time.")
         pass
 def back_up_curr_cb(text,bot):
-        bot.say("Right away " + bot.pronoun)
+        #bot.say("Right away " + bot.pronoun)
         project = get_current_project()
+        print(project["path"])
         if project == None:
                 bot.say("Sir, I'm not quite sure what project you're talking about.")
         else:
-                #bot.say("Are you talking about " + project["name"] + "?")
-                bot.say("I'll remember that.")
-                remember_current_project(project)
+                if text.find("branch") > -1:
+                                bot.say("not implimented")
+                                print("not implimented")
+                else:
+                        project["branch"] = "master"
+                        remember_current_project(project)
+                        upload_folder(project,bot)
         pass
 ###############################
 #           if list           #
@@ -302,6 +378,15 @@ def fuzzy_logic_v2(text,bot):
                 # return true since it ran a command off of what the user said
                 return True
 
+def init(bot):
+        global github_user
+        bot.say("If this is your first time using the gitpanion driver, \
+        you may have to sign in through the web browser I'm about to open. \
+        copy the code from that web page \
+        and paste it in the terminal to get started using github with me.")
+        oauth_token = github_api.check_oauth_token()
+        github_user = github_api.GitHubUser(oauth_token)
+
 def run(text,bot):
         """evaluates the <text> string and acts apon it"""
         """
@@ -334,4 +419,6 @@ def run(text,bot):
         else:
                 res = fuzzy_logic_v2(text,bot)
         return res
+if __name__ == '__main__':
+        print(get_current_project())
 
