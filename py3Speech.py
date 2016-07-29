@@ -14,56 +14,17 @@ def get_mics():
                         
         return mics
 
-def phrase_percent(text,desired_text):
-        punc = [".",",","?","!"]
-        for i in punc:
-                text = text.replace(i,"")
-        text = text.lower()
-        t = text.split(" ")
-        for i in punc:
-                desired_text = desired_text.replace(i,"")
-        desired_text = desired_text.lower()
-        dt = desired_text.split(" ")
-        percent = 0
-        
-        # first the short pass, 100% accuracy
-        if text == desired_text:
-                percent = 100
-                return percent
-        # next see how many correct words are in the string
-        wrdc = 0
-        for i in dt:
-                if text.find(i) > -1:
-                        wrdc += 1
-        wrdp = ( wrdc / len(t) ) * 100
-        # divide by text in case there are extra words in text, resulting in a larger numerator and an unfair denominator
-        # now see what words are spot on with where they should be in the sentance (and is supposed to be there)
-        pwrdc = 0
-        for i in range(0,len(t)):
-                wrd = t[i]
-                global err
-                err = False
-                try:
-                        dwrd = dt[i]
-                except IndexError:
-                        print("err: " + str(i))
-                        err = True
-                if err == False:
-                        if wrd == dwrd:
-                                pwrdc +=1
-        pwp = ( pwrdc / len(t) ) * 100
-        # divide by text in case there are extra words in text, resulting in a larger numerator and an unfair denominator
-        avg = ( (wrdp / 1.5) + (pwp * 1.5) ) / 2
-        return avg
-
 class ArtificialIntelligence(object):
-        def __init__(self,mic,name,user_name):
+        def __init__(self,mic,name,user_name,assistance_package,pronoun):
                 self.mic_index = mic
                 self.recognizer = speech_recognition.Recognizer()
                 self.user_name = user_name
                 self.name = name
                 self.speech_engine = pyttsx.init('sapi5') # see http://pyttsx.readthedocs.org/en/latest/engine.html#pyttsx.init
                 self.speech_engine.setProperty('rate', 150)
+                self.assistance_package = __import__("assistance_drivers." + assistance_package).__getattribute__(assistance_package)
+                self.pronoun = pronoun
+                # such as Sir or Miss
         def say(self,text):
                 """play audio for whatever text is given; say it."""
                 self.speech_engine.say(text)
@@ -105,30 +66,44 @@ class ArtificialIntelligence(object):
                 micNum = int(input("which mic will you use? (int):"))
                 self.mic_index = mics[micNum]["index"]
         def give_assistance(self,message=None):
+                """ DEPRACATED - use fast_assist() """
                 if message != None:
                         self.say(message)
                 response = self.listen(command="Yes Sir?")
                 print(response)
+                self.assistance_package.run(response,self)
+        def fast_assist(self,text):
+                res = self.assistance_package.run(text,self)
+                print(res)
         def assistance_loop(self):
                 """run a loop, and when the bot name is said, it will ask if anything is needed and listen"""
                 looping = True
+                driver = self.assistance_package.init(self)
                 while looping:
-                        audio = self.listen()
-                        audio = audio.lower()
+                        raw_audio = self.listen()
+                        audio = raw_audio.lower()
                         if audio != "":
                                 print(audio)
                         if audio.find(self.name.lower()) > -1:
-                                self.give_assistance(message="Just a moment Sir.")
+                                self.fast_assist(raw_audio)
                         elif audio.find("shut down") > -1 or audio.find("shutdown") > -1:
+                                self.say("shutting down...")
                                 looping = False
                                 sys.exit()
+                        elif audio != "" and audio != None:
+                                self.fast_assist(False)
+                                
                 pass
         def run(self):
-                self.choose_mic()
+                #self.choose_mic()
+                self.mic_index = 0
+                self.say("I'm llistening whenever you need me Sir!")
                 self.assistance_loop()
                 pass
 def main():
-        jarvis = ArtificialIntelligence(1,"Jarvis","Calder")
+        jarvis = ArtificialIntelligence(1,"Jarvis","Calder","gitpanion_api","Sir")
+        #jarvis.assistance_package.init(jarvis)
+        #jarvis.fast_assist("hey jarvis save this")
         jarvis.run()
 
 if __name__ == '__main__':

@@ -1,0 +1,11 @@
+install in this order:
+WINDOWS:
+	PyWin32 : https://sourceforge.net/projects/pywin32/files/pywin32/Build%20220/
+	pyaudio : pip install SpeechRecognition
+	pyttsx : (custom version) https://github.com/Julian-O/pyttsx
+	speech_recognition : pip install SpeechRecognition
+	--------------------
+	* this is needed for the built in package : gitpanion_api, and its requirements.
+	gitpanion : pip install gitpanion
+	requests : pip install requests
+	getpass

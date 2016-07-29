@@ -1,0 +1,4 @@
+eq = requests.put("https://api.github.com/repos/CalderWhite/Github_Api_Test/contents/Test.txt",data=data,headers=headers)
+data = '{"commiter": {"email": "' + email + '", "name": "' + username + '"}, "sha": "' + sha + '", "content": "' + file + '", "message": "' + msg + '",branch:"' + branch + '"}'
+
+oauth_token = "25457bed69c28668a3c415a99aa2ffe1d7986d80"
